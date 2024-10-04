@@ -50,9 +50,15 @@ RUN apt-get update && \
 RUN bash .github/workflows/cuda/Linux.sh "ubuntu-${UBUNTU_VERSION}" ${CUDA_VERSION}
 
 # Install libtorch
-RUN wget --no-check-certificate -nv https://download.pytorch.org/libtorch/cu"${CUDA_VERSION%%.*}"$(echo $CUDA_VERSION | cut -d'.' -f2)/libtorch-cxx11-abi-shared-with-deps-${TORCH_VERSION}%2Bcu"${CUDA_VERSION%%.*}"$(echo $CUDA_VERSION | cut -d'.' -f2).zip -O libtorch.zip && \
+RUN if [[ "$CUDA_VERSION" = "12.6" ]]; then \
+    wget --no-check-certificate -nv https://download.pytorch.org/libtorch/cu124/libtorch-cxx11-abi-shared-with-deps-2.4.1%2Bcu124.zip -O libtorch.zip && \
     unzip -q libtorch.zip -d . && \
-    rm ./libtorch.zip
+    rm ./libtorch.zip; \
+    else \
+    wget --no-check-certificate -nv https://download.pytorch.org/libtorch/cu"${CUDA_VERSION%%.*}"$(echo $CUDA_VERSION | cut -d'.' -f2)/libtorch-cxx11-abi-shared-with-deps-${TORCH_VERSION}%2Bcu"${CUDA_VERSION%%.*}"$(echo $CUDA_VERSION | cut -d'.' -f2).zip -O libtorch.zip && \
+    unzip -q libtorch.zip -d . && \
+    rm ./libtorch.zip; \
+    fi
 
 # Configure and build \
 RUN source .github/workflows/cuda/Linux-env.sh cu"${CUDA_VERSION%%.*}"$(echo $CUDA_VERSION | cut -d'.' -f2) && \
@@ -66,3 +72,4 @@ RUN source .github/workflows/cuda/Linux-env.sh cu"${CUDA_VERSION%%.*}"$(echo $CU
     -DCMAKE_CUDA_ARCHITECTURES="${CMAKE_CUDA_ARCHITECTURES}" \
     -DCUDA_TOOLKIT_ROOT_DIR=${CUDA_HOME} && \
     ninja
+
